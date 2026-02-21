@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 /**
@@ -38,7 +39,20 @@ public class MainApplicationFrame extends JFrame
         addWindow(gameWindow);
 
         setJMenuBar(generateMenuBar());
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        
+        addWindowListener(new WindowAdapter() {
+        	public void windowClosing(WindowEvent e) {
+        		String[] buttons_names = {"Да", "Нет"};
+        		int result = JOptionPane.showOptionDialog(MainApplicationFrame.this, 
+                        "Вы действительно хотите выйти?", "Внимание!",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
+                        null, buttons_names, buttons_names[1]);
+        		if (result == JOptionPane.YES_OPTION) {
+        			System.exit(0);
+        		}
+        	}
+        });
     }
     
     protected LogWindow createLogWindow()
