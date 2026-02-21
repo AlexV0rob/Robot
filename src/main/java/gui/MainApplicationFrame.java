@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 
 /**
  * Что требуется сделать:
@@ -68,6 +69,27 @@ public class MainApplicationFrame extends JFrame
     }
     
     /**
+     * Сгенерировать меню с настройками игры
+     */
+    private JMenu generateGameMenu() {
+    	JMenu menu = new JMenu("Игра");
+        menu.setMnemonic(KeyEvent.VK_G);
+        menu.getAccessibleContext().setAccessibleDescription(
+                "Настройки игры");
+        
+        menu.add(createMenuItem(
+        		"Выйти",
+        		KeyEvent.VK_E,
+        		(event) -> {
+        			Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+        			        new WindowEvent(
+        			        		MainApplicationFrame.this, 
+        			        		WindowEvent.WINDOW_CLOSING));
+        		}));
+        return menu;
+    }
+    
+    /**
      * Сгенерировать меню с настройками отображения
      */
     private JMenu generateViewMenu() {
@@ -115,6 +137,7 @@ public class MainApplicationFrame extends JFrame
     private JMenuBar generateMenuBar()
     {
         JMenuBar menuBar = new JMenuBar();
+        menuBar.add(generateGameMenu());
         menuBar.add(generateViewMenu());
         menuBar.add(generateTestsMenu());
         return menuBar;
