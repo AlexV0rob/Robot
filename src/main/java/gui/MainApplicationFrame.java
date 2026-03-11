@@ -9,12 +9,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-/**
- * Что требуется сделать:
- * 1. Метод создания меню перегружен функционалом и трудно читается. 
- * Следует разделить его на серию более простых методов (или вообще выделить отдельный класс).
- *
- */
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
@@ -30,12 +24,11 @@ public class MainApplicationFrame extends JFrame
 
         setContentPane(desktopPane);
         
-        
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow);
 
         GameWindow gameWindow = new GameWindow();
-        gameWindow.setSize(400,  400);
+        gameWindow.setSize(400, 400);
         addWindow(gameWindow);
 
         setJMenuBar(generateMenuBar());
@@ -43,14 +36,7 @@ public class MainApplicationFrame extends JFrame
         
         addWindowListener(new WindowAdapter() {
         	public void windowClosing(WindowEvent e) {
-        		String[] buttons_names = {"Да", "Нет"};
-        		int result = JOptionPane.showOptionDialog(MainApplicationFrame.this, 
-                        "Вы действительно хотите выйти?", "Внимание!",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
-                        null, buttons_names, buttons_names[1]);
-        		if (result == JOptionPane.YES_OPTION) {
-        			System.exit(0);
-        		}
+        		createClosingApprovalWindow();
         	}
         });
     }
@@ -170,5 +156,19 @@ public class MainApplicationFrame extends JFrame
         {
             // just ignore
         }
+    }
+    
+    /**
+     * Показать окно подтверждения выхода
+     */
+    private void createClosingApprovalWindow() {
+    	String[] buttons_names = {"Да", "Нет"};
+		int result = JOptionPane.showOptionDialog(MainApplicationFrame.this, 
+                "Вы действительно хотите выйти?", "Внимание!",
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
+                null, buttons_names, buttons_names[1]);
+		if (result == JOptionPane.YES_OPTION) {
+			System.exit(0);
+		}
     }
 }
