@@ -3,12 +3,13 @@ package gui;
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
-import state.StateHandleHelper;
+
+import state.WindowStateHandler;
 import state.StateSaveable;
-import state.WindowState;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 
 public class LogWindow extends JInternalFrame implements LogChangeListener, StateSaveable
 {
@@ -18,9 +19,9 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
     /**
      * Помощник для сохранения состояния
      */
-    private final StateHandleHelper stateHelper;
+    private final WindowStateHandler stateHandler;
 
-    public LogWindow(LogWindowSource logSource, StateHandleHelper stateHandleHelper)
+    public LogWindow(LogWindowSource logSource, WindowStateHandler windowStateHandler)
     {
         super("Протокол работы", true, true, true, true);
         this.logSource = logSource;
@@ -34,7 +35,7 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
         pack();
         updateLogContent();
         
-        stateHelper = stateHandleHelper;
+        stateHandler = windowStateHandler;
     }
 
     private void updateLogContent()
@@ -55,12 +56,17 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
     }
 
 	@Override
-	public WindowState saveState() {
-		return stateHelper.saveJInternalFrameState(this);
+	public Map<String, String> saveState() {
+		return stateHandler.saveJInternalFrameState(this);
 	}
 
 	@Override
-	public void recoverState(WindowState windowState) {
-		stateHelper.recoverJInternalFrameState(this, windowState);
+	public void recoverState(Map<String, String> windowState) {
+		stateHandler.recoverJInternalFrameState(this, windowState);
+	}
+
+	@Override
+	public String sayMyName() {
+		return "log";
 	}
 }
