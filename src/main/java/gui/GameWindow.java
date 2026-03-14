@@ -2,11 +2,11 @@ package gui;
 
 import javax.swing.*;
 
-import state.StateHandleHelper;
+import state.WindowStateHandler;
 import state.StateSaveable;
-import state.WindowState;
 
 import java.awt.*;
+import java.util.Map;
 
 public class GameWindow extends JInternalFrame implements StateSaveable
 {
@@ -15,9 +15,9 @@ public class GameWindow extends JInternalFrame implements StateSaveable
     /**
      * Помощник для сохранения состояния
      */
-    private final StateHandleHelper stateHelper;
+    private final WindowStateHandler stateHandler;
 
-    public GameWindow(StateHandleHelper stateHandleHelper) 
+    public GameWindow(WindowStateHandler windowStateHandler) 
     {
         super("Игровое поле", true, true, true, true);
         gameVisualizer = new GameVisualizer();
@@ -26,16 +26,21 @@ public class GameWindow extends JInternalFrame implements StateSaveable
         getContentPane().add(panel);
         pack();
         
-        stateHelper = stateHandleHelper;
+        stateHandler = windowStateHandler;
     }
 
 	@Override
-	public WindowState saveState() {
-		return stateHelper.saveJInternalFrameState(this);
+	public Map<String, String> saveState() {
+		return stateHandler.saveJInternalFrameState(this);
 	}
 
 	@Override
-	public void recoverState(WindowState windowState) {
-		stateHelper.recoverJInternalFrameState(this, windowState);
+	public void recoverState(Map<String, String> windowState) {
+		stateHandler.recoverJInternalFrameState(this, windowState);
+	}
+
+	@Override
+	public String sayMyName() {
+		return "game";
 	}
 }
