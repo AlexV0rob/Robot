@@ -1,18 +1,13 @@
 package state;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Файловые запись и чтение состояния
@@ -21,9 +16,8 @@ public class StateFileHandler {
 	/**
 	 * Записать состояния в файл
 	 */
-	public void writeStates(Map<String, WindowState> windowStates, 
-			List<String> windowsKeys, String fileName)
-					throws StateHandleException {
+	public void writeStates(List<Map<String, String>> windowsStates, String fileName)
+			throws StateHandleException {
 		File file;
 		if (fileName.isEmpty()) {
 			file = new File(System.getProperty("user.home"), "vorobyov/state.cfg");
@@ -33,19 +27,8 @@ public class StateFileHandler {
 		try {
 			file.getParentFile().mkdirs();
 			file.createNewFile();
-			OutputStream out = new FileOutputStream(file);
-			try {
-				out = new BufferedOutputStream(out);
-				for (String windowKey : windowsKeys) {
-					WindowState currentState = windowStates.getOrDefault(
-							windowKey,
-							new WindowState(-1, -1, -1, -1, false));
-					out.write(stateToBytes(currentState));
-				}
-				out.flush();
-			} finally {
-				out.close();
-			}
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.writeValue(file, windowsStates);
 		} catch (IOException e) {
 			throw new StateHandleException(
 					"Couldn't write state to file: " + e.getMessage());
@@ -55,10 +38,10 @@ public class StateFileHandler {
 	/**
 	 * Прочитать состояния из файла
 	 */
-	public Map<String, WindowState> readStates(List<String> windowsKeys, String fileName) 
+	public Map<String, Map<String, String>> readStates(String fileName) 
 			throws StateHandleException {
 		File file;
-		Map<String, WindowState> statesMap = new HashMap<>();
+		Map<String, Map<String, String>> statesMap = new HashMap<>();
 		if (fileName.isEmpty()) {
 			file = new File(System.getProperty("user.home"), "vorobyov/state.cfg");
 		} else {
@@ -66,17 +49,14 @@ public class StateFileHandler {
 		}
 		try {
 			if (file.exists()) {
-				InputStream in = new FileInputStream(file);
-				try {
-					in = new BufferedInputStream(in);
-					for (String windowKey : windowsKeys) {
-						byte[] byteState = new byte[WindowState.STATE_LENGTH];
-						in.read(byteState);
-						WindowState currentState = bytesToWindowState(byteState);
-						statesMap.put(windowKey, currentState);
+				ObjectMapper mapper = new ObjectMapper();
+				List<Map<String, String>> windowsStates = 
+						mapper.readValue(file, new TypeReference<>() {});
+				for (Map<String, String> state : windowsStates) {
+					String name = state.get("name");
+					if (name != null) {
+						statesMap.put(name, state);
 					}
-				} finally {
-					in.close();
 				}
 			}
 		} catch (IOException e) {
@@ -84,38 +64,5 @@ public class StateFileHandler {
 					"Couldn't read state from file: " + e.getMessage());
 		}
 		return statesMap;
-	}
-	
-	/**
-	 * Конвертировать состояние окна в массив байтов
-	 */
-	private byte[] stateToBytes(WindowState windowState) {
-		ByteBuffer byteBuffer = ByteBuffer.allocate(WindowState.STATE_LENGTH);
-		byteBuffer.putInt(windowState.width());
-		byteBuffer.putInt(windowState.height());
-		byteBuffer.putInt(windowState.x());
-		byteBuffer.putInt(windowState.y());
-		byteBuffer.put((byte) (windowState.isIconified() ? 1 : 0));
-		return byteBuffer.array();
-	}
-	
-	/**
-	 * Конвертировать массив байтов в состояние окна
-	 */
-	private WindowState bytesToWindowState(byte[] byteArray) {
-		ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
-		int width, height, x, y;
-		boolean isIconified;
-		try {
-			width = byteBuffer.getInt();
-			height = byteBuffer.getInt();
-			x = byteBuffer.getInt();
-			y = byteBuffer.getInt();
-			isIconified = (byteBuffer.get() == 1);
-		} catch (BufferUnderflowException e) {
-			width = height = x = y = -1;
-			isIconified = false;
-		}
-		return new WindowState(width, height, x, y, isIconified);
 	}
 }

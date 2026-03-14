@@ -9,6 +9,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,14 +21,9 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
     private final JDesktopPane desktopPane = new JDesktopPane();
     
     /**
-     * Список окон с сохраняемым состоянием
+     * Ассоциативный массив, содержащий сохраняемые окна
      */
-    private final List<StateSaveable> saveableWindows;
-    
-    /**
-     * Список ключей для сохранения/восстановления состояний окон
-     */
-    private final List<String> windowsKeys;
+    private final Map<String, StateSaveable> saveableWindows;
     
     /**
      * Файловый обработчик состояний окон 
@@ -37,39 +33,38 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
     /**
      * Помощник для сохранения сосоятояния
      */
-    private final StateHandleHelper stateHandleHelper = new StateHandleHelper();
+    private final WindowStateHandler stateHandler = new WindowStateHandler();
     
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
         int inset = 50;        
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(inset, inset,
-            screenSize.width  - inset*2,
-            screenSize.height - inset*2);
+        //setBounds(inset, inset,
+        //    screenSize.width  - inset*2,
+        //    screenSize.height - inset*2);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
+        
+        saveableWindows = new HashMap<>();
+        saveableWindows.put(sayMyName(), this);
 
         setContentPane(desktopPane);
-        
-        saveableWindows = new ArrayList<>();
-        windowsKeys = new ArrayList<>();
         
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow);
 
-        GameWindow gameWindow = new GameWindow(stateHandleHelper);
+        GameWindow gameWindow = new GameWindow(stateHandler);
         gameWindow.setSize(400, 400);
         addWindow(gameWindow);
 
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         
-        saveableWindows.add(this);
-        windowsKeys.add("main");
-        saveableWindows.add(logWindow);
-        windowsKeys.add("log");
-        saveableWindows.add(gameWindow);
-        windowsKeys.add("game");
+        Arrays.stream(this.getContentPane().getComponents()).forEach(component -> {
+			if (component instanceof StateSaveable saveableComponent) {
+				saveableWindows.put(saveableComponent.sayMyName(), saveableComponent);
+			}
+        });
         
         recoverWindowsStates();
         
@@ -83,7 +78,7 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
     protected LogWindow createLogWindow()
     {
         LogWindow logWindow = new LogWindow(
-        		Logger.getDefaultLogSource(), stateHandleHelper);
+        		Logger.getDefaultLogSource(), stateHandler);
         logWindow.setLocation(10,10);
         logWindow.setSize(300, 800);
         setMinimumSize(logWindow.getSize());
@@ -94,6 +89,7 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
     
     protected void addWindow(JInternalFrame frame)
     {
+    	
         desktopPane.add(frame);
         frame.setVisible(true);
     }
@@ -204,12 +200,14 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
      * Сохранить состояния окон
      */
     private void saveWindowsStates() {
-    	Map<String, WindowState> windowsStates = new HashMap<>();
-    	for (int i = 0; i < saveableWindows.size(); ++i) {
-    		windowsStates.put(windowsKeys.get(i), saveableWindows.get(i).saveState());
+    	List<Map<String, String>> windowsStates = new ArrayList<>();
+    	for (Map.Entry<String, StateSaveable> window : saveableWindows.entrySet()) {
+    		Map<String, String> state = window.getValue().saveState();
+    		state.put("name", window.getValue().sayMyName());
+    		windowsStates.add(state);
     	}
     	try {
-    		stateFileHandler.writeStates(windowsStates, windowsKeys, "");
+    		stateFileHandler.writeStates(windowsStates, "");
     	} catch (StateHandleException e) {
     		JOptionPane.showConfirmDialog(MainApplicationFrame.this, 
     				e.getMessage(), "Ошибка!", 
@@ -221,13 +219,12 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
      * Восстановить состояния окон
      */
     private void recoverWindowsStates() {
-    	Map<String, WindowState> windowsStates;
     	try {
-    		windowsStates = stateFileHandler.readStates(windowsKeys, "");
-    		for (int i = 0; i < windowsKeys.size(); ++i) {
-    			WindowState windowState = windowsStates.get(windowsKeys.get(i));
-    			if (windowState != null) {
-    				saveableWindows.get(i).recoverState(windowState);
+        	Map<String, Map<String, String>> windowsStates = stateFileHandler.readStates("");
+    		for (Map.Entry<String, Map<String, String>> state : windowsStates.entrySet()) {
+    			StateSaveable window = saveableWindows.get(state.getKey());
+    			if (window != null) {
+    				window.recoverState(state.getValue());
     			}
         	}
     	} catch (StateHandleException e) {
@@ -253,12 +250,17 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
     }
 
 	@Override
-	public WindowState saveState() {
-		return stateHandleHelper.saveJFrameState(this);
+	public Map<String, String> saveState() {
+		return stateHandler.saveJFrameState(this);
 	}
 
 	@Override
-	public void recoverState(WindowState windowState) {
-		stateHandleHelper.recoverJFrameState(this, windowState);
+	public void recoverState(Map<String, String> windowState) {
+		stateHandler.recoverJFrameState(this, windowState);
+	}
+
+	@Override
+	public String sayMyName() {
+		return "Heisenberg";
 	}
 }
