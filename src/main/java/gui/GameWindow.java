@@ -2,31 +2,49 @@ package gui;
 
 import javax.swing.*;
 
+import robot.GameController;
+import robot.RobotGame;
 import state.WindowStateHandler;
 import state.StateSaveable;
 
 import java.awt.*;
 import java.util.Map;
 
-public class GameWindow extends JInternalFrame implements StateSaveable
-{
+public class GameWindow extends JInternalFrame implements StateSaveable {
+	/**
+	 * Визулизатор игрового состояния
+	 */
     private final GameVisualizer gameVisualizer;
+    
+    /**
+     * Модель робота
+     */
+    private final RobotGame robot;
+    
+    /**
+     * Контроллер игры
+     */
+    private final GameController controller;
     
     /**
      * Помощник для сохранения состояния
      */
     private final WindowStateHandler stateHandler;
 
-    public GameWindow(WindowStateHandler windowStateHandler) 
-    {
+    /**
+     * Создать окно с игрой
+     */
+    public GameWindow(WindowStateHandler windowStateHandler, RobotGame robotGame) {
         super("Игровое поле", true, true, true, true);
-        gameVisualizer = new GameVisualizer();
+        robot = robotGame;
+        controller = new GameController(robot);
+        stateHandler = windowStateHandler;
+        gameVisualizer = new GameVisualizer(controller);
+        robot.addPropertyChangeListener(gameVisualizer);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(gameVisualizer, BorderLayout.CENTER);
         getContentPane().add(panel);
         pack();
-        
-        stateHandler = windowStateHandler;
     }
 
 	@Override

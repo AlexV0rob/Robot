@@ -1,6 +1,7 @@
 package gui;
 
 import log.Logger;
+import robot.RobotGame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,9 +54,15 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow);
 
-        GameWindow gameWindow = new GameWindow(stateHandler);
+        RobotGame robotGame = new RobotGame();
+        
+        GameWindow gameWindow = new GameWindow(stateHandler, robotGame);
         gameWindow.setSize(400, 400);
         addWindow(gameWindow);
+        
+        RobotInfoWindow robotInfo = new RobotInfoWindow(stateHandler, robotGame);
+        robotInfo.setSize(300, 200);
+        addWindow(robotInfo);
 
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
