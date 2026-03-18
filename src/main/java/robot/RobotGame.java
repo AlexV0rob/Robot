@@ -160,7 +160,7 @@ public class RobotGame {
         			+ angularCoefficient * ANGULAR_INCREMENT;
         	double angularVelocity = (flashOnTheRight(angleToTarget) ? -1 : 1)
         			* angularVelocityAbsolute;
-        	moveRobot(velocity, angularVelocity, 30);
+        	moveRobot(velocity, angularVelocity, 20);
     	}
     }
 
