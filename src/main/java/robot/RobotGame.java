@@ -14,12 +14,12 @@ public class RobotGame {
 	 */
 	private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 	
-    private volatile double robotPositionX = 100;
-    private volatile double robotPositionY = 100; 
-    private volatile double robotDirection = 0; 
+    private double robotPositionX = 100;
+    private double robotPositionY = 100; 
+    private double robotDirection = 0; 
 
-    private volatile int targetPositionX = 150;
-    private volatile int targetPositionY = 100;
+    private int targetPositionX = 150;
+    private int targetPositionY = 100;
 
     private static final double MAX_VELOCITY = 0.1;
     private static final double MAX_ANGULAR_VELOCITY = 0.01;
