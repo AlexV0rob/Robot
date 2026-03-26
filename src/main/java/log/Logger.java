@@ -3,7 +3,7 @@ package log;
 public final class Logger
 {
     private static final LogWindowSource DEFAULT_LOG_SOURCE =
-            new LogWindowSource(100);
+            new LogWindowSource(5);
 
     private Logger()
     {
@@ -17,6 +17,11 @@ public final class Logger
     public static void error(String strMessage)
     {
         DEFAULT_LOG_SOURCE.append(LogLevel.Error, strMessage);
+    }
+    
+    public static void info(String strMessage)
+    {
+        DEFAULT_LOG_SOURCE.append(LogLevel.Info, strMessage);
     }
 
     public static LogWindowSource getDefaultLogSource()

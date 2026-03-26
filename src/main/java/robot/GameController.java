@@ -1,5 +1,7 @@
 package robot;
 
+import log.Logger;
+
 /**
  * Контроллер для управления игрой
  */
@@ -21,5 +23,8 @@ public class GameController {
 	 */
 	public void setTargetPosition(int targetPositionX, int targetPositionY) {
 		game.changeTargetPosition(targetPositionX, targetPositionY);
+		Logger.info(String.format(
+				"Новое положение цели: x=%d, y=%d", 
+				targetPositionX, targetPositionY));
 	}
 }

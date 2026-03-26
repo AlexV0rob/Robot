@@ -3,7 +3,7 @@ package gui;
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
-
+import log.Logger;
 import state.WindowStateHandler;
 import state.StateSaveable;
 
@@ -12,6 +12,8 @@ import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Map;
 
 public class LogWindow extends JInternalFrame implements LogChangeListener, StateSaveable
@@ -31,6 +33,14 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
         this.logSource.registerListener(this);
         this.logContent = new TextArea("");
         this.logContent.setSize(200, 500);
+        this.logContent.addKeyListener(new KeyAdapter() {
+        	public void keyPressed(KeyEvent e) {
+            	e.consume();
+                if (e.getKeyCode() == KeyEvent.VK_T) {
+                	Logger.debug("TEST TEST TEST");
+                }
+            }
+        });
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(logContent, BorderLayout.CENTER);
