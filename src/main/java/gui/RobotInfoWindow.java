@@ -57,8 +57,6 @@ public class RobotInfoWindow extends JInternalFrame implements StateSaveable, Pr
     		content.append("Robot X: ").append(newGameData.robotPositionX()).append("\n");
     		content.append("Robot Y: ").append(newGameData.robotPositionY()).append("\n");
     		content.append("Robot direction: ").append(newGameData.robotDirection()).append("\n");
-    		content.append("Target X: ").append(newGameData.targetPositionX()).append("\n");
-    		content.append("Target Y: ").append(newGameData.targetPositionY()).append("\n");
         	infoContent.setText(content.toString());
         	infoContent.invalidate();
     	}
