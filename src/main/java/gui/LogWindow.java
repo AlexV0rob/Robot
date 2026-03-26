@@ -8,6 +8,9 @@ import state.WindowStateHandler;
 import state.StateSaveable;
 
 import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+
 import java.awt.*;
 import java.util.Map;
 
@@ -36,6 +39,14 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
         updateLogContent();
         
         stateHandler = windowStateHandler;
+        
+        addInternalFrameListener(new InternalFrameAdapter() {
+        	public void internalFrameClosing(InternalFrameEvent e) {
+        		if (logSource != null) {
+        			logSource.clearListeners();
+        		}
+        	}
+        });
     }
 
     private void updateLogContent()
