@@ -78,7 +78,7 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
 
 	@Override
 	public Map<String, String> saveState() {
-		return stateHandler.saveJInternalFrameState(this);
+		return stateHandler.saveJInternalFrameState(this, sayMyName());
 	}
 
 	@Override
