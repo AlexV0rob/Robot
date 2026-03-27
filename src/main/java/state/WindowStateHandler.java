@@ -15,9 +15,9 @@ public class WindowStateHandler {
 	/**
 	 * Сохранить состояние окна, унаследованного от JInternalFrame
 	 */
-	public Map<String, String> saveJInternalFrameState(JInternalFrame frame) {
+	public Map<String, String> saveJInternalFrameState(JInternalFrame frame, String name) {
 		Map<String, String> state = new HashMap<>();
-		state.put("name", "");
+		state.put("name", name);
 		state.put("width", String.valueOf(frame.getWidth()));
 		state.put("height", String.valueOf(frame.getHeight()));
 		state.put("x", String.valueOf(frame.getX()));
@@ -48,9 +48,9 @@ public class WindowStateHandler {
 	/**
 	 * Сохранить состояние окна, унаследованного от JFrame
 	 */
-	public Map<String, String> saveJFrameState(JFrame frame) {
+	public Map<String, String> saveJFrameState(JFrame frame, String name) {
 		Map<String, String> state = new HashMap<>();
-		state.put("name", "");
+		state.put("name", name);
 		state.put("width", String.valueOf(frame.getWidth()));
 		state.put("height", String.valueOf(frame.getHeight()));
 		state.put("x", String.valueOf(frame.getX()));
@@ -85,8 +85,7 @@ public class WindowStateHandler {
 	 * Получить конвертированное в число значение по ключу или вернуть стандартное, 
 	 * если возникло исключение или значение отрицательно
 	 */
-	private int getValueByKeyOrDefault(String key, Map<String, String> state, 
-			int defaultValue) {
+	private int getValueByKeyOrDefault(String key, Map<String, String> state, int defaultValue) {
 		String stringValue = state.get(key);
 		if (stringValue == null) {
 			return defaultValue;

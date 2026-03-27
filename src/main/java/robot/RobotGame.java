@@ -23,10 +23,12 @@ public class RobotGame {
 
     private static final double MAX_VELOCITY = 0.1;
     private static final double MAX_ANGULAR_VELOCITY = 0.01;
+    
     /**
      * Начальное значение игровой скорости
      */
     private static final double START_ANGULAR_VELOCITY = 0.001;
+    
     /**
      * Значение, на которое увеличивается угловая скорость
      */
@@ -35,29 +37,7 @@ public class RobotGame {
     /**
      * Коэффициент увеличения угловой скорости
      */
-    private double angularCoefficient = 0;
-    
-    private final Timer timer = initTimer();
-    
-    private static Timer initTimer() 
-    {
-        Timer timer = new Timer("events generator", true);
-        return timer;
-    }
-    
-    /**
-     * Создать игру
-     */
-    public RobotGame() {
-    	timer.schedule(new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-                updateModel();
-            }
-        }, 0, 10);
-    }
+    private double angularCoefficient = 0;    
     
     /**
      * Добавить слушателя свойства
@@ -149,7 +129,7 @@ public class RobotGame {
     /**
      * Обновить модель
      */
-    private void updateModel()
+    protected void updateModel()
     {
     	if (distance(targetPositionX, targetPositionY, robotPositionX, robotPositionY) > 1) {
     		angularCoefficient += 1;

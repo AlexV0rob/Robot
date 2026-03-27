@@ -64,7 +64,7 @@ public class RobotInfoWindow extends JInternalFrame implements StateSaveable, Pr
 
 	@Override
 	public Map<String, String> saveState() {
-		return stateHandler.saveJInternalFrameState(this);
+		return stateHandler.saveJInternalFrameState(this, sayMyName());
 	}
 
 	@Override
