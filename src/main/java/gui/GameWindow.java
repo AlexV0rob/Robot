@@ -38,6 +38,7 @@ public class GameWindow extends JInternalFrame implements StateSaveable {
         super("Игровое поле", true, true, true, true);
         robot = robotGame;
         controller = new GameController(robot);
+        controller.startGame();
         stateHandler = windowStateHandler;
         gameVisualizer = new GameVisualizer(controller);
         robot.addPropertyChangeListener(gameVisualizer);
@@ -49,7 +50,7 @@ public class GameWindow extends JInternalFrame implements StateSaveable {
 
 	@Override
 	public Map<String, String> saveState() {
-		return stateHandler.saveJInternalFrameState(this);
+		return stateHandler.saveJInternalFrameState(this, sayMyName());
 	}
 
 	@Override

@@ -161,20 +161,22 @@ public class LogQueue implements Iterable<LogEntry> {
 	public Iterator<LogEntry> iterator() {
 		return new Iterator<LogEntry> () {
             private volatile LogQueueNode currentNode = m_tail;
+            private final LogQueueNode lastNode = m_head;
 
             @Override
-            public synchronized boolean hasNext() {
+            public boolean hasNext() {
                 return currentNode != null;
             }
 
             @Override
-            public synchronized LogEntry next() {
-            	if (!hasNext()) {
-            		currentNode = m_tail;            		
-            	}
+            public LogEntry next() {
             	if (hasNext()) {
             		LogEntry currentEntry = currentNode.getLogEntry();
-            		currentNode = currentNode.getNextNode();
+            		if (currentNode == lastNode) {
+            			currentNode = null;
+            		} else {
+            			currentNode = currentNode.getNextNode();
+            		}
             		return currentEntry;            		
             	}
             	throw new NoSuchElementException();

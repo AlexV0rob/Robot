@@ -38,10 +38,10 @@ public class StateFileHandler {
 	/**
 	 * Прочитать состояния из файла
 	 */
-	public Map<String, Map<String, String>> readStates(String fileName) 
+	public List<Map<String, String>> readStates(String fileName) 
 			throws StateHandleException {
 		File file;
-		Map<String, Map<String, String>> statesMap = new HashMap<>();
+		List<Map<String, String>> windowsStates = List.of();
 		if (fileName.isEmpty()) {
 			file = new File(System.getProperty("user.home"), "vorobyov/state.cfg");
 		} else {
@@ -50,19 +50,12 @@ public class StateFileHandler {
 		try {
 			if (file.exists()) {
 				ObjectMapper mapper = new ObjectMapper();
-				List<Map<String, String>> windowsStates = 
-						mapper.readValue(file, new TypeReference<>() {});
-				for (Map<String, String> state : windowsStates) {
-					String name = state.get("name");
-					if (name != null) {
-						statesMap.put(name, state);
-					}
-				}
+				windowsStates = mapper.readValue(file, new TypeReference<>() {});
 			}
 		} catch (IOException e) {
 			throw new StateHandleException(
 					"Couldn't read state from file: " + e.getMessage());
 		}
-		return statesMap;
+		return windowsStates;
 	}
 }
