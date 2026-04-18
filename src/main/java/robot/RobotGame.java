@@ -2,8 +2,6 @@ package robot;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Логика робота
@@ -45,7 +43,9 @@ public class RobotGame {
     public void addPropertyChangeListener(PropertyChangeListener listener) {
     	changeSupport.addPropertyChangeListener(listener);
     	fireNewData(new GameData(targetPositionX, targetPositionY, 
-    			robotPositionX, robotPositionY, robotDirection));
+    			robotPositionX, robotPositionY, 
+    			robotDirection, angleTo(robotPositionX, robotPositionY,
+    					targetPositionX, targetPositionY)));
     }
     
     /**
@@ -76,7 +76,9 @@ public class RobotGame {
     private void moveRobot(double velocity, double angularVelocity, double duration)
     {
     	GameData oldData = new GameData(targetPositionX, targetPositionY, 
-    			robotPositionX, robotPositionY, robotDirection);
+    			robotPositionX, robotPositionY, 
+    			robotDirection, angleTo(robotPositionX, robotPositionY,
+    					targetPositionX, targetPositionY));
         velocity = applyLimits(velocity, 0, MAX_VELOCITY);
         angularVelocity = applyLimits(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
         double newX = robotPositionX + velocity / angularVelocity * 
@@ -160,7 +162,9 @@ public class RobotGame {
      */
     private void fireNewData(GameData oldData) {
     	GameData newData = new GameData(targetPositionX, targetPositionY, 
-    			robotPositionX, robotPositionY, robotDirection);
+    			robotPositionX, robotPositionY, 
+    			robotDirection, angleTo(robotPositionX, robotPositionY, 
+    					targetPositionX, targetPositionY));
 		changeSupport.firePropertyChange("GameData", oldData, newData);
 	}
 }

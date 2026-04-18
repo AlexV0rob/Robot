@@ -3,6 +3,7 @@ package robot;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import localization.Localizator;
 import log.Logger;
 
 /**
@@ -13,6 +14,11 @@ public class GameController {
 	 * Экземпляр игры
 	 */
 	private final RobotGame game;
+	
+	/**
+	 * Локализатор
+	 */
+	private final Localizator localizator = Localizator.getInstance();
     
 	/**
 	 * Таймер для управления игрой
@@ -54,8 +60,7 @@ public class GameController {
 	 */
 	public void setTargetPosition(int targetPositionX, int targetPositionY) {
 		game.changeTargetPosition(targetPositionX, targetPositionY);
-		Logger.info(String.format(
-				"Новое положение цели: x=%d, y=%d", 
+		Logger.info(localizator.getString("log.message.target_location", 
 				targetPositionX, targetPositionY));
 	}
 }
