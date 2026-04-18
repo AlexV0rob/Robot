@@ -104,4 +104,11 @@ public class Localizator {
 		changeSupport.firePropertyChange("LanguageChange", 
 				oldLocale, currentLocale);
     }
+    
+    /**
+     * Получить текущую локаль в виде строки
+     */
+    public String getCurrentLocale() {
+    	return currentLocale.toString();
+    }
 }

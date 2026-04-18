@@ -45,6 +45,8 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
+    	List<Map<String, String>> windowsStates = readWindowsStates();
+    	recoverLocale(windowsStates);
         int inset = 50;        
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset,
@@ -70,13 +72,14 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         
-        recoverWindowsStates();
-        
         addWindowListener(new WindowAdapter() {
         	public void windowClosing(WindowEvent e) {
         		createClosingApprovalWindow();
         	}
         });
+        
+        recoverWindowsStates(windowsStates);
+        
         localizator.addPropertyChangeListener(this);
     }
     
@@ -188,7 +191,7 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
         		localizator.getString("menu.lang.manager.ru"),
         		KeyEvent.VK_R,
         		(event) -> {
-        			localizator.changeLocale(Locale.of("ru", "RU"));
+        			setLocale("ru_RU");
         			this.invalidate();
         		}));
 
@@ -196,7 +199,7 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
         		localizator.getString("menu.lang.manager.en"),
         		KeyEvent.VK_E,
         		(event) -> {
-        			localizator.changeLocale(Locale.of("en", "US"));
+        			setLocale("en_US");
         			this.invalidate();
         		}));
         return menu;
@@ -230,10 +233,38 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
     }
     
     /**
+     * Сохранить текущую локаль
+     */
+    private Map<String, String> saveCurrentLocale() {
+    	return Map.of("locale", localizator.getCurrentLocale());
+    }
+    
+    /**
+     * Восстановить локаль
+     */
+    private void recoverLocale(List<Map<String, String>> states) {
+    	for (Map<String, String> state : states) {
+ 			String locale = state.get("locale");
+ 			if (locale != null) {
+     			setLocale(locale);
+     			break;
+ 			}
+ 		}
+    }
+    
+    /**
+     * Установить локаль
+     */
+    private void setLocale(String locale) {
+		localizator.changeLocale(Locale.of(locale));
+    }
+    
+    /**
      * Сохранить состояния окон
      */
     private void saveWindowsStates() {
     	List<Map<String, String>> windowsStates = new ArrayList<>();
+    	windowsStates.add(saveCurrentLocale());
     	Map<String, StateSaveable> saveableWindows = findAllSaveableWindows();
     	for (Map.Entry<String, StateSaveable> window : saveableWindows.entrySet()) {
     		windowsStates.add(window.getValue().saveState());
@@ -246,21 +277,31 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
     }
     
     /**
-     * Восстановить состояния окон
+     * Получить состояния окон из файла
      */
-    private void recoverWindowsStates() {
+    private List<Map<String, String>> readWindowsStates() {
     	try {
-        	Map<String, StateSaveable> saveableWindows = findAllSaveableWindows();
-        	List<Map<String, String>> windowsStates = stateFileHandler.readStates("");
-    		for (Map<String, String> state : windowsStates) {
-    			StateSaveable window = saveableWindows.get(state.get("name"));
-    			if (window != null) {
-    				window.recoverState(state);
-    			}
-        	}
+    		return stateFileHandler.readStates("");
     	} catch (StateHandleException e) {
     		showWindowStateErrorDialog(e.getMessage());
     	}
+    	return List.of();
+    }
+    
+    /**
+     * Восстановить состояния окон
+     */
+    private void recoverWindowsStates(List<Map<String, String>> windowsStates) {
+        Map<String, StateSaveable> saveableWindows = findAllSaveableWindows();
+    	for (Map<String, String> state : windowsStates) {
+    		String name = state.get("name");
+    		if (name != null) {
+        		StateSaveable window = saveableWindows.get(name);
+        		if (window != null) {
+        			window.recoverState(state);
+        		}
+    		}
+        }
     }
     
     /**
