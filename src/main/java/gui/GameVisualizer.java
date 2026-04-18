@@ -19,7 +19,7 @@ public class GameVisualizer extends JPanel implements PropertyChangeListener {
 	/**
 	 * Текущее состояние игры
 	 */
-	private GameData gameData = new GameData(150, 100, 100, 100, 0);
+	private GameData gameData = null;
 	
 	/**
 	 * Контроллер для управления положением цели
@@ -62,10 +62,12 @@ public class GameVisualizer extends JPanel implements PropertyChangeListener {
     {
         super.paint(g);
         Graphics2D g2d = (Graphics2D)g; 
-        drawRobot(g2d, round(gameData.robotPositionX()), 
-        		round(gameData.robotPositionY()), 
-        		gameData.robotDirection());
-        drawTarget(g2d, gameData.targetPositionX(), gameData.targetPositionY());
+        if (gameData != null) {
+        	drawRobot(g2d, round(gameData.robotPositionX()),
+        			round(gameData.robotPositionY()),
+        			gameData.robotDirection());
+        	drawTarget(g2d, gameData.targetPositionX(), gameData.targetPositionY());
+        }
     }
     
     private static void fillOval(Graphics g, int centerX, int centerY, int diam1, int diam2)
