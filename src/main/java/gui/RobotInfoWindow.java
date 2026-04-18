@@ -2,6 +2,7 @@ package gui;
 
 import javax.swing.*;
 
+import localization.Localizator;
 import robot.GameData;
 import robot.RobotGame;
 import state.WindowStateHandler;
@@ -30,13 +31,23 @@ public class RobotInfoWindow extends JInternalFrame implements StateSaveable, Pr
      * Текстовое поле с информацией о роботе
      */
     private TextArea infoContent;
+    
+	/**
+	 * Текущее состояние игры
+	 */
+	private GameData gameData = null;
+    
+    /**
+     * Локализатор
+     */
+    private final Localizator localizator = Localizator.getInstance();
 
     /**
      * Создать окно с информацией об игре
      */
-    public RobotInfoWindow(WindowStateHandler windowStateHandler, RobotGame robotGame) 
-    {
-        super("Информация о роботе", true, true, true, true);
+    public RobotInfoWindow(WindowStateHandler windowStateHandler, RobotGame robotGame) {
+        super("", true, true, true, true);
+        setTitle(localizator.getString("info.name"));
         robot = robotGame;
         stateHandler = windowStateHandler;
         this.infoContent = new TextArea("");
@@ -46,20 +57,55 @@ public class RobotInfoWindow extends JInternalFrame implements StateSaveable, Pr
         panel.add(infoContent, BorderLayout.CENTER);
         getContentPane().add(panel);
         pack();
-        robot.addPropertyChangeListener(this);      
+        robot.addPropertyChangeListener(this);
+        localizator.addPropertyChangeListener(this);
     }
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
+		if (evt.getPropertyName().equals("GameData")) {
+			robotPropertyChange(evt);
+		} else if (evt.getPropertyName().equals("LanguageChange")) {
+			languagePropertyChange(evt);
+		}
+	}
+	
+	/**
+	 * Изменить язык
+	 */
+	private void languagePropertyChange(PropertyChangeEvent evt) {
+		setTitle(localizator.getString("info.name"));
+		EventQueue.invokeLater(this::redraw);
+	}
+	
+	/**
+	 * Изменить информацию о роботе
+	 */
+	private void robotPropertyChange(PropertyChangeEvent evt) {
 		Object gameDataRaw = evt.getNewValue();
     	if (gameDataRaw instanceof GameData newGameData) {
-    		StringBuilder content = new StringBuilder();
-    		content.append("Robot X: ").append(newGameData.robotPositionX()).append("\n");
-    		content.append("Robot Y: ").append(newGameData.robotPositionY()).append("\n");
-    		content.append("Robot direction: ").append(newGameData.robotDirection()).append("\n");
+    		gameData = newGameData;
+    		EventQueue.invokeLater(this::redraw);
+    	}
+	}
+	
+	/**
+	 * Нарисовать состояние
+	 */
+	private void redraw() {
+		if (gameData != null) {
+			StringBuilder content = new StringBuilder();
+    		content.append(localizator.getString(
+    				"info.robot_x", gameData.robotPositionX())).append("\n");
+    		content.append(localizator.getString(
+    				"info.robot_y", gameData.robotPositionY())).append("\n");
+    		content.append(localizator.getString(
+    				"info.robot_direction", gameData.robotDirection())).append("\n");
+    		content.append(localizator.getString(
+    				"info.angle_to_target", gameData.angleToTarget())).append("\n");
         	infoContent.setText(content.toString());
         	infoContent.invalidate();
-    	}
+		}
 	}
 
 	@Override

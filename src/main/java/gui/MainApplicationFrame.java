@@ -4,20 +4,26 @@ import log.Logger;
 import robot.RobotGame;
 
 import javax.swing.*;
+
+import localization.Localizator;
+
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import state.*;
 
-public class MainApplicationFrame extends JFrame implements StateSaveable
+public class MainApplicationFrame extends JFrame implements StateSaveable, PropertyChangeListener
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
     
@@ -27,6 +33,11 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
     private final StateFileHandler stateFileHandler = new StateFileHandler();
     
     /**
+     * Локализатор
+     */
+    private final Localizator localizator = Localizator.getInstance();
+    
+    /**
      * Помощник для сохранения сосоятояния
      */
     private final WindowStateHandler stateHandler = new WindowStateHandler();
@@ -34,6 +45,8 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
+    	List<Map<String, String>> windowsStates = readWindowsStates();
+    	recoverLocale(windowsStates);
         int inset = 50;        
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset,
@@ -59,13 +72,15 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         
-        recoverWindowsStates();
-        
         addWindowListener(new WindowAdapter() {
         	public void windowClosing(WindowEvent e) {
         		createClosingApprovalWindow();
         	}
         });
+        
+        recoverWindowsStates(windowsStates);
+        
+        localizator.addPropertyChangeListener(this);
     }
     
     protected LogWindow createLogWindow()
@@ -76,7 +91,7 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
         logWindow.setSize(300, 800);
         setMinimumSize(logWindow.getSize());
         logWindow.pack();
-        Logger.debug("Протокол работает");
+        Logger.debug(localizator.getString("log.message.working"));
         return logWindow;
     }
     
@@ -101,13 +116,13 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
      * Сгенерировать меню с настройками игры
      */
     private JMenu generateGameMenu() {
-    	JMenu menu = new JMenu("Игра");
+    	JMenu menu = new JMenu(localizator.getString("menu.game.name"));
         menu.setMnemonic(KeyEvent.VK_G);
         menu.getAccessibleContext().setAccessibleDescription(
-                "Настройки игры");
+                localizator.getString("menu.game.settings.name"));
         
         menu.add(createMenuItem(
-        		"Выйти",
+        		localizator.getString("menu.game.settings.exit"),
         		KeyEvent.VK_E,
         		(event) -> {
         			Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
@@ -122,13 +137,13 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
      * Сгенерировать меню с настройками отображения
      */
     private JMenu generateViewMenu() {
-    	JMenu menu = new JMenu("Режим отображения");
+    	JMenu menu = new JMenu(localizator.getString("menu.view.name"));
         menu.setMnemonic(KeyEvent.VK_V);
         menu.getAccessibleContext().setAccessibleDescription(
-                "Управление режимом отображения приложения");
+                localizator.getString("menu.view.mode_manager.name"));
         
         menu.add(createMenuItem(
-        		"Системная схема",
+        		localizator.getString("menu.view.mode_manager.system"),
         		KeyEvent.VK_S,
         		(event) -> {
         			setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -136,8 +151,8 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
         		}));
 
         menu.add(createMenuItem(
-        		"Универсальная схема",
-        		KeyEvent.VK_S,
+        		localizator.getString("menu.view.mode_manager.universal"),
+        		KeyEvent.VK_U,
         		(event) -> {
         			setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         			this.invalidate();
@@ -149,16 +164,43 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
      * Сгенерировать меню с тестами
      */
     private JMenu generateTestsMenu() {
-    	JMenu menu = new JMenu("Тесты");
+    	JMenu menu = new JMenu(localizator.getString("menu.test.name"));
         menu.setMnemonic(KeyEvent.VK_T);
         menu.getAccessibleContext().setAccessibleDescription(
-                "Тестовые команды");
+                localizator.getString("menu.test.commands.name"));
         
         menu.add(createMenuItem(
-        		"Сообщение в лог",
+        		localizator.getString("menu.test.commands.message"),
         		KeyEvent.VK_S,
         		(event) -> {
-        			Logger.debug("Новая строка");
+        			Logger.debug(localizator.getString("log.message.new_string"));
+        		}));
+        return menu;
+    }
+    
+    /**
+     * Сгенерировать меню с настройками языка
+     */
+    private JMenu generateLangMenu() {
+    	JMenu menu = new JMenu(localizator.getString("menu.lang.name"));
+        menu.setMnemonic(KeyEvent.VK_L);
+        menu.getAccessibleContext().setAccessibleDescription(
+                localizator.getString("menu.lang.manager.name"));
+        
+        menu.add(createMenuItem(
+        		localizator.getString("menu.lang.manager.ru"),
+        		KeyEvent.VK_R,
+        		(event) -> {
+        			setLocale("ru_RU");
+        			this.invalidate();
+        		}));
+
+        menu.add(createMenuItem(
+        		localizator.getString("menu.lang.manager.en"),
+        		KeyEvent.VK_E,
+        		(event) -> {
+        			setLocale("en_US");
+        			this.invalidate();
         		}));
         return menu;
     }
@@ -172,6 +214,7 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
         menuBar.add(generateGameMenu());
         menuBar.add(generateViewMenu());
         menuBar.add(generateTestsMenu());
+        menuBar.add(generateLangMenu());
         return menuBar;
     }
     
@@ -190,10 +233,38 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
     }
     
     /**
+     * Сохранить текущую локаль
+     */
+    private Map<String, String> saveCurrentLocale() {
+    	return Map.of("locale", localizator.getCurrentLocale());
+    }
+    
+    /**
+     * Восстановить локаль
+     */
+    private void recoverLocale(List<Map<String, String>> states) {
+    	for (Map<String, String> state : states) {
+ 			String locale = state.get("locale");
+ 			if (locale != null) {
+     			setLocale(locale);
+     			break;
+ 			}
+ 		}
+    }
+    
+    /**
+     * Установить локаль
+     */
+    private void setLocale(String locale) {
+		localizator.changeLocale(Locale.of(locale));
+    }
+    
+    /**
      * Сохранить состояния окон
      */
     private void saveWindowsStates() {
     	List<Map<String, String>> windowsStates = new ArrayList<>();
+    	windowsStates.add(saveCurrentLocale());
     	Map<String, StateSaveable> saveableWindows = findAllSaveableWindows();
     	for (Map.Entry<String, StateSaveable> window : saveableWindows.entrySet()) {
     		windowsStates.add(window.getValue().saveState());
@@ -201,39 +272,58 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
     	try {
     		stateFileHandler.writeStates(windowsStates, "");
     	} catch (StateHandleException e) {
-    		JOptionPane.showConfirmDialog(MainApplicationFrame.this, 
-    				e.getMessage(), "Ошибка!", 
-    				JOptionPane.CANCEL_OPTION, JOptionPane.ERROR_MESSAGE);
+    		showWindowStateErrorDialog(e.getMessage());
     	}
+    }
+    
+    /**
+     * Получить состояния окон из файла
+     */
+    private List<Map<String, String>> readWindowsStates() {
+    	try {
+    		return stateFileHandler.readStates("");
+    	} catch (StateHandleException e) {
+    		showWindowStateErrorDialog(e.getMessage());
+    	}
+    	return List.of();
     }
     
     /**
      * Восстановить состояния окон
      */
-    private void recoverWindowsStates() {
-    	try {
-        	Map<String, StateSaveable> saveableWindows = findAllSaveableWindows();
-        	List<Map<String, String>> windowsStates = stateFileHandler.readStates("");
-    		for (Map<String, String> state : windowsStates) {
-    			StateSaveable window = saveableWindows.get(state.get("name"));
-    			if (window != null) {
-    				window.recoverState(state);
-    			}
-        	}
-    	} catch (StateHandleException e) {
-    		JOptionPane.showConfirmDialog(MainApplicationFrame.this, 
-    				e.getMessage(), "Ошибка!", 
-    				JOptionPane.CANCEL_OPTION, JOptionPane.ERROR_MESSAGE);
-    	}
+    private void recoverWindowsStates(List<Map<String, String>> windowsStates) {
+        Map<String, StateSaveable> saveableWindows = findAllSaveableWindows();
+    	for (Map<String, String> state : windowsStates) {
+    		String name = state.get("name");
+    		if (name != null) {
+        		StateSaveable window = saveableWindows.get(name);
+        		if (window != null) {
+        			window.recoverState(state);
+        		}
+    		}
+        }
+    }
+    
+    /**
+     * Показать окно ошибки при обработке состояний окон
+     */
+    private void showWindowStateErrorDialog(String message) {
+		JOptionPane.showConfirmDialog(MainApplicationFrame.this, 
+				message, localizator.getString("error.name"), 
+				JOptionPane.CANCEL_OPTION, JOptionPane.ERROR_MESSAGE);    	
     }
     
     /**
      * Показать окно подтверждения выхода
      */
     private void createClosingApprovalWindow() {
-    	String[] buttons_names = {"Да", "Нет"};
+    	String[] buttons_names = {
+    			localizator.getString("close_window.yes"), 
+    			localizator.getString("close_window.no")
+    	};
 		int result = JOptionPane.showOptionDialog(MainApplicationFrame.this, 
-                "Вы действительно хотите выйти?", "Внимание!",
+                localizator.getString("close_window.text"), 
+                localizator.getString("close_window.name"),
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
                 null, buttons_names, buttons_names[1]);
 		if (result == JOptionPane.YES_OPTION) {
@@ -255,6 +345,11 @@ public class MainApplicationFrame extends JFrame implements StateSaveable
         });
     	return windows;
     }
+    
+    @Override
+   	public void propertyChange(PropertyChangeEvent evt) {
+    	setJMenuBar(generateMenuBar());
+   	}
 
 	@Override
 	public Map<String, String> saveState() {

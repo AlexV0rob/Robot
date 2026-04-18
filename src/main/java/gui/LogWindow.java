@@ -11,13 +11,17 @@ import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 
+import localization.Localizator;
+
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Map;
 
-public class LogWindow extends JInternalFrame implements LogChangeListener, StateSaveable
-{
+public class LogWindow extends JInternalFrame 
+implements LogChangeListener, StateSaveable, PropertyChangeListener {
     private LogWindowSource logSource;
     private TextArea logContent;
     
@@ -25,10 +29,16 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
      * Помощник для сохранения состояния
      */
     private final WindowStateHandler stateHandler;
+    
+    /**
+     * Локализатор
+     */
+    private final Localizator localizator = Localizator.getInstance();
 
     public LogWindow(LogWindowSource logSource, WindowStateHandler windowStateHandler)
     {
-        super("Протокол работы", true, true, true, true);
+        super("", true, true, true, true);
+        setTitle(localizator.getString("log.name"));
         this.logSource = logSource;
         this.logSource.registerListener(this);
         this.logContent = new TextArea("");
@@ -37,7 +47,7 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
         	public void keyPressed(KeyEvent e) {
             	e.consume();
                 if (e.getKeyCode() == KeyEvent.VK_T) {
-                	Logger.debug("TEST TEST TEST");
+                	Logger.debug(localizator.getString("log.message.test"));
                 }
             }
         });
@@ -57,8 +67,9 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
         		}
         	}
         });
+        localizator.addPropertyChangeListener(this);
     }
-
+    
     private void updateLogContent()
     {
         StringBuilder content = new StringBuilder();
@@ -69,6 +80,12 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Stat
         logContent.setText(content.toString());
         logContent.invalidate();
     }
+    
+    @Override
+   	public void propertyChange(PropertyChangeEvent evt) {
+        setTitle(localizator.getString("log.name"));
+        updateLogContent();
+   	}
     
     @Override
     public void onLogChanged()
