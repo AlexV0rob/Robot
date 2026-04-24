@@ -1,4 +1,4 @@
-package jar;
+package jar_test;
 
 import java.awt.Color;
 import java.awt.Graphics;
