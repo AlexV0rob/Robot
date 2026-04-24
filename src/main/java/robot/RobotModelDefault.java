@@ -1,17 +1,9 @@
 package robot;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-
 /**
  * Логика робота
  */
-public class RobotGame {
-	/**
-	 * Обработка изменения свойства
-	 */
-	private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
-	
+public class RobotModelDefault implements RobotModel {
     private double robotPositionX = 100;
     private double robotPositionY = 100; 
     private double robotDirection = 0; 
@@ -35,34 +27,16 @@ public class RobotGame {
     /**
      * Коэффициент увеличения угловой скорости
      */
-    private double angularCoefficient = 0;    
+    private double angularCoefficient = 0;
     
-    /**
-     * Добавить слушателя свойства
-     */
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-    	changeSupport.addPropertyChangeListener(listener);
-    	fireNewData(new GameData(targetPositionX, targetPositionY, 
-    			robotPositionX, robotPositionY, 
-    			robotDirection, angleTo(robotPositionX, robotPositionY,
-    					targetPositionX, targetPositionY)));
-    }
-    
-    /**
-     * Удалить слушателя свойства
-     */
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-    	changeSupport.removePropertyChangeListener(listener);
-    }
-    
-    /**
-     * Поменять позицию цели
-     */
-    public void changeTargetPosition(int positionX, int positionY)  {
-    	targetPositionX = positionX;
-    	targetPositionY = positionY;
-    	angularCoefficient = 0;
-    }
+    @Override
+	public void changeState(GameData gameData) {
+		robotPositionX = gameData.robotPositionX();
+		robotPositionY = gameData.robotPositionY();
+		robotDirection = gameData.robotDirection();
+		targetPositionX = gameData.targetPositionX();
+		targetPositionY = gameData.targetPositionY();
+	}
     
 	private static double applyLimits(double value, double min, double max)
     {
@@ -73,12 +47,7 @@ public class RobotGame {
         return value;
     }
     
-    private void moveRobot(double velocity, double angularVelocity, double duration)
-    {
-    	GameData oldData = new GameData(targetPositionX, targetPositionY, 
-    			robotPositionX, robotPositionY, 
-    			robotDirection, angleTo(robotPositionX, robotPositionY,
-    					targetPositionX, targetPositionY));
+    private void moveRobot(double velocity, double angularVelocity, double duration) {
         velocity = applyLimits(velocity, 0, MAX_VELOCITY);
         angularVelocity = applyLimits(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
         double newX = robotPositionX + velocity / angularVelocity * 
@@ -95,9 +64,7 @@ public class RobotGame {
         }
         robotPositionX = newX;
         robotPositionY = newY;
-        double newDirection = asNormalizedRadians(robotDirection + angularVelocity * duration);
-        robotDirection = newDirection;
-        fireNewData(oldData);
+        robotDirection = asNormalizedRadians(robotDirection + angularVelocity * duration);
     }
 
 	private static double asNormalizedRadians(double angle)
@@ -128,16 +95,17 @@ public class RobotGame {
         return asNormalizedRadians(Math.atan2(diffY, diffX));
     }
     
-    /**
-     * Обновить модель
-     */
-    protected void updateModel()
+    @Override
+    public void updateModel()
     {
     	if (distance(targetPositionX, targetPositionY, robotPositionX, robotPositionY) > 1) {
-    		angularCoefficient += 1;
-    		double velocity = MAX_VELOCITY;
-        	double angleToTarget = angleTo(robotPositionX, robotPositionY,
+    		double angleToTarget = angleTo(robotPositionX, robotPositionY,
                 	targetPositionX, targetPositionY);
+    		angularCoefficient += 1;
+        	if (Math.abs(angleToTarget - robotDirection) < 1e-3) {
+        		angularCoefficient = 0;
+        	}
+    		double velocity = MAX_VELOCITY;
         	double angularVelocityAbsolute = START_ANGULAR_VELOCITY
         			+ angularCoefficient * ANGULAR_INCREMENT;
         	double angularVelocity = (flashOnTheRight(angleToTarget) ? -1 : 1)
@@ -157,14 +125,11 @@ public class RobotGame {
     	}
     }
 
-    /**
-     * Отправить новые данные о состоянии
-     */
-    private void fireNewData(GameData oldData) {
-    	GameData newData = new GameData(targetPositionX, targetPositionY, 
-    			robotPositionX, robotPositionY, 
-    			robotDirection, angleTo(robotPositionX, robotPositionY, 
-    					targetPositionX, targetPositionY));
-		changeSupport.firePropertyChange("GameData", oldData, newData);
+	@Override
+	public GameData getCurrentState() {
+		return new GameData(targetPositionX, targetPositionY, 
+				robotPositionX, robotPositionY, 
+				robotDirection, angleTo(robotPositionX, robotPositionY,
+						targetPositionX, targetPositionY));
 	}
 }

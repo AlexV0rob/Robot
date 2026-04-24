@@ -9,10 +9,17 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import localization.Localizator;
+
 /**
  * Файловые запись и чтение состояния
  */
 public class StateFileHandler {
+	/**
+	 * Локализатор
+	 */
+	private final Localizator localizator = Localizator.getInstance();
+	
 	/**
 	 * Записать состояния в файл
 	 */
@@ -31,7 +38,7 @@ public class StateFileHandler {
 			mapper.writeValue(file, windowsStates);
 		} catch (IOException e) {
 			throw new StateHandleException(
-					"Couldn't write state to file: " + e.getMessage());
+					localizator.getString("state.error.write", e.getMessage()));
 		}
 	}
 
@@ -54,7 +61,7 @@ public class StateFileHandler {
 			}
 		} catch (IOException e) {
 			throw new StateHandleException(
-					"Couldn't read state from file: " + e.getMessage());
+					localizator.getString("state.error.read", e.getMessage()));
 		}
 		return windowsStates;
 	}
