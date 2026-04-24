@@ -20,9 +20,24 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Map;
 
+/**
+ * Окно с логами
+ */
 public class LogWindow extends JInternalFrame 
 implements LogChangeListener, StateSaveable, PropertyChangeListener {
+	/**
+	 * Изменение языка
+	 */
+	private final static String LANGUAGE_CHANGE = "language_change";
+	
+	/**
+	 * Хранитель логов
+	 */
     private LogWindowSource logSource;
+    
+    /**
+     * Текстовое поле с логами
+     */
     private TextArea logContent;
     
     /**
@@ -83,8 +98,10 @@ implements LogChangeListener, StateSaveable, PropertyChangeListener {
     
     @Override
    	public void propertyChange(PropertyChangeEvent evt) {
-        setTitle(localizator.getString("log.name"));
-        updateLogContent();
+    	if (evt.getPropertyName().equals(LANGUAGE_CHANGE)) {
+            setTitle(localizator.getString("log.name"));
+            updateLogContent();
+		}
    	}
     
     @Override

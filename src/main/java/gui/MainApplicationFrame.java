@@ -1,10 +1,16 @@
 package gui;
 
 import log.Logger;
-import robot.RobotGame;
+import robot.GameMouseController;
+import robot.GameManager;
+import robot.RobotController;
+import robot.RobotModelDefault;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
+import loader.LoaderException;
+import loader.RobotLoader;
 import localization.Localizator;
 
 import java.awt.*;
@@ -23,8 +29,12 @@ import java.util.Map;
 
 import state.*;
 
-public class MainApplicationFrame extends JFrame implements StateSaveable, PropertyChangeListener
-{
+public class MainApplicationFrame extends JFrame implements StateSaveable, PropertyChangeListener {
+	/**
+	 * Изменение языка
+	 */
+	private final static String LANGUAGE_CHANGE = "language_change";
+	
     private final JDesktopPane desktopPane = new JDesktopPane();
     
     /**
@@ -42,6 +52,16 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
      */
     private final WindowStateHandler stateHandler = new WindowStateHandler();
     
+    /**
+     * Загрузчик классов роботов
+     */
+    private final RobotLoader robotLoader = new RobotLoader();
+    
+    /**
+     * Менеджер игры
+     */
+    private final GameManager gameManager = new GameManager();
+    
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
@@ -58,29 +78,33 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
         
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow);
-
-        RobotGame robotGame = new RobotGame();
+    
+        RobotController controller = new GameMouseController(gameManager);
+        GameVisualizer gameVisualizer = new GameVisualizer(controller, gameManager);
+        RobotInfoVisualizer infoVisualizer = new RobotInfoVisualizer(gameManager);
         
-        GameWindow gameWindow = new GameWindow(stateHandler, robotGame);
+        JInternalFrame gameWindow = new GameWindow(stateHandler, gameVisualizer);
         gameWindow.setSize(400, 400);
         addWindow(gameWindow);
         
-        RobotInfoWindow robotInfo = new RobotInfoWindow(stateHandler, robotGame);
+        JInternalFrame robotInfo = new RobotInfoWindow(stateHandler, infoVisualizer);
         robotInfo.setSize(300, 200);
         addWindow(robotInfo);
 
         setJMenuBar(generateMenuBar());
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         
+        recoverWindowsStates(windowsStates);
+        
+        localizator.addPropertyChangeListener(this);
+
+        gameManager.startGame();
+        
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
         	public void windowClosing(WindowEvent e) {
         		createClosingApprovalWindow();
         	}
         });
-        
-        recoverWindowsStates(windowsStates);
-        
-        localizator.addPropertyChangeListener(this);
     }
     
     protected LogWindow createLogWindow()
@@ -120,6 +144,13 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
         menu.setMnemonic(KeyEvent.VK_G);
         menu.getAccessibleContext().setAccessibleDescription(
                 localizator.getString("menu.game.settings.name"));
+        
+        menu.add(createMenuItem(
+        		localizator.getString("menu.game.settings.upload"),
+        		KeyEvent.VK_U,
+        		(event) -> {
+        			uploadRobot();
+        		}));
         
         menu.add(createMenuItem(
         		localizator.getString("menu.game.settings.exit"),
@@ -253,6 +284,68 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
     }
     
     /**
+     * Загрузить робота
+     */
+    private void uploadRobot() {
+    	JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(
+        		new FileNameExtensionFilter(
+        				localizator.getString("loader.file_picker.files"), 
+        				"jar"));
+        fileChooser.setDialogTitle(localizator.getString("loader.file_picker.name"));
+        int returnVal = fileChooser.showOpenDialog(this);
+        if(returnVal == JFileChooser.APPROVE_OPTION) {
+        	try {
+        		robotLoader.loadRobotJar(fileChooser.getSelectedFile());
+        		try {
+        			gameManager.setModel(robotLoader.getRobotModelClass());
+        		} catch (LoaderException e) {
+        			gameManager.setModel(new RobotModelDefault());
+        			showNotificationDialog(e.getMessage(), 
+        					getJOptionPaneType(e.getCriticalLevel()),
+        					getJOptionPaneMessageKey(e.getCriticalLevel()));
+        		}
+        		try {
+        			gameManager.setDrawer(robotLoader.getRobotDrawerClass());        	        			
+        		} catch (LoaderException e) {
+        			gameManager.setDrawer(new RobotDrawerDefault());
+        			showNotificationDialog(e.getMessage(), 
+        					getJOptionPaneType(e.getCriticalLevel()),
+        					getJOptionPaneMessageKey(e.getCriticalLevel()));
+        		}
+        	} catch (LoaderException e) {
+    			showNotificationDialog(e.getMessage(), 
+    					getJOptionPaneType(e.getCriticalLevel()),
+    					getJOptionPaneMessageKey(e.getCriticalLevel()));
+        	}
+        }
+    }
+    
+    /**
+     * Получить код типа JOptionPane по критическому уровню загрузчика классов
+     */
+    private int getJOptionPaneType(int criticalLevel) {
+    	return switch(criticalLevel) {
+		case 0 -> JOptionPane.INFORMATION_MESSAGE;
+		case 1 -> JOptionPane.WARNING_MESSAGE;
+		case 2 -> JOptionPane.ERROR_MESSAGE;
+		default -> JOptionPane.INFORMATION_MESSAGE;
+		};
+    }
+    
+    /**
+     * Получить ключ сообщения JOptionPane по критическому уровню загрузчика классов
+     */
+    private String getJOptionPaneMessageKey(int criticalLevel) {
+    	return switch(criticalLevel) {
+		case 0 -> "error.notification";
+		case 1 -> "error.warning";
+		case 2 -> "error.error";
+		default -> "error.notification";
+		};
+    }
+    
+    /**
      * Установить локаль
      */
     private void setLocale(String locale) {
@@ -272,7 +365,7 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
     	try {
     		stateFileHandler.writeStates(windowsStates, "");
     	} catch (StateHandleException e) {
-    		showWindowStateErrorDialog(e.getMessage());
+    		showNotificationDialog(e.getMessage(), JOptionPane.ERROR_MESSAGE, "error.error");
     	}
     }
     
@@ -283,7 +376,7 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
     	try {
     		return stateFileHandler.readStates("");
     	} catch (StateHandleException e) {
-    		showWindowStateErrorDialog(e.getMessage());
+    		showNotificationDialog(e.getMessage(), JOptionPane.ERROR_MESSAGE, "error.error");
     	}
     	return List.of();
     }
@@ -307,10 +400,10 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
     /**
      * Показать окно ошибки при обработке состояний окон
      */
-    private void showWindowStateErrorDialog(String message) {
+    private void showNotificationDialog(String message, int jOptionPaneStatus, String messageKey) {
 		JOptionPane.showConfirmDialog(MainApplicationFrame.this, 
-				message, localizator.getString("error.name"), 
-				JOptionPane.CANCEL_OPTION, JOptionPane.ERROR_MESSAGE);    	
+				message, localizator.getString(messageKey), 
+				JOptionPane.CANCEL_OPTION, jOptionPaneStatus);    	
     }
     
     /**
@@ -348,7 +441,9 @@ public class MainApplicationFrame extends JFrame implements StateSaveable, Prope
     
     @Override
    	public void propertyChange(PropertyChangeEvent evt) {
-    	setJMenuBar(generateMenuBar());
+    	if (evt.getPropertyName().equals(LANGUAGE_CHANGE)) {
+        	setJMenuBar(generateMenuBar());
+		}
    	}
 
 	@Override

@@ -3,9 +3,6 @@ package gui;
 import javax.swing.*;
 
 import localization.Localizator;
-import robot.GameController;
-import robot.GameData;
-import robot.RobotGame;
 import state.WindowStateHandler;
 import state.StateSaveable;
 
@@ -14,22 +11,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Map;
 
+/**
+ * Окно с визуальным отображением игры
+ */
 public class GameWindow extends JInternalFrame implements StateSaveable, PropertyChangeListener {
 	/**
-	 * Визулизатор игрового состояния
+	 * Изменение языка
 	 */
-    private final GameVisualizer gameVisualizer;
-    
-    /**
-     * Модель робота
-     */
-    private final RobotGame robot;
-    
-    /**
-     * Контроллер игры
-     */
-    private final GameController controller;
-    
+	private final static String LANGUAGE_CHANGE = "language_change";    
     /**
      * Помощник для сохранения состояния
      */
@@ -43,25 +32,22 @@ public class GameWindow extends JInternalFrame implements StateSaveable, Propert
     /**
      * Создать окно с игрой
      */
-    public GameWindow(WindowStateHandler windowStateHandler, RobotGame robotGame) {
+    public GameWindow(WindowStateHandler windowStateHandler, GameVisualizer gameVisualizer) {
         super("", true, true, true, true);
         setTitle(localizator.getString("game.name"));
-        robot = robotGame;
-        controller = new GameController(robot);
-        controller.startGame();
         stateHandler = windowStateHandler;
-        gameVisualizer = new GameVisualizer(controller);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(gameVisualizer, BorderLayout.CENTER);
         getContentPane().add(panel);
         pack();
-        robot.addPropertyChangeListener(gameVisualizer);
         localizator.addPropertyChangeListener(this);
     }
     
     @Override
    	public void propertyChange(PropertyChangeEvent evt) {
-        setTitle(localizator.getString("game.name"));
+    	if (evt.getPropertyName().equals(LANGUAGE_CHANGE)) {
+			setTitle(localizator.getString("game.name"));
+		}
    	}
 
 	@Override
