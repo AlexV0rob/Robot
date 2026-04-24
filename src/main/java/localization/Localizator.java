@@ -13,6 +13,11 @@ import java.util.ResourceBundle;
  */
 public class Localizator {
 	/**
+	 * Изменение языка
+	 */
+	private final static String LANGUAGE_CHANGE = "language_change";
+	
+	/**
 	 * Обработка изменения языка
 	 */
 	private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
@@ -81,9 +86,30 @@ public class Localizator {
 	}
 	
 	/**
-	 * Получить строку по ключу с выбранными параметрами
+	 * Получить строку по ключу
+	 */
+	public String getString(String key) {
+		return getMessageFormat(key).toPattern();
+	}
+	
+	/**
+	 * Получить строку по ключу с выбранными числовыми параметрами
 	 */
 	public String getString(String key, Number... numbers) {
+		return getMessageFormat(key).format(numbers);
+	}
+	
+	/**
+	 * Получить строку по ключу с выбранными строковыми параметрами
+	 */
+	public String getString(String key, String... numbers) {
+		return getMessageFormat(key).format(numbers);
+	}
+	
+	/**
+	 * Получить MessageFormat из кеша
+	 */
+	private MessageFormat getMessageFormat(String key) {
 		Map<String, MessageFormat> localeCache = cache.get(currentLocale);
 		if (localeCache == null) {
 			localeCache = new HashMap<String, MessageFormat>();
@@ -94,14 +120,14 @@ public class Localizator {
 			format = new MessageFormat(resources.getString(key));
 			localeCache.put(key, format);
 		}
-		return format.format(numbers);
+		return format;
 	}
 	
 	/**
 	 * Послать новые данные
 	 */
     private void fireNewData(Locale oldLocale) {
-		changeSupport.firePropertyChange("LanguageChange", 
+		changeSupport.firePropertyChange(LANGUAGE_CHANGE, 
 				oldLocale, currentLocale);
     }
     
