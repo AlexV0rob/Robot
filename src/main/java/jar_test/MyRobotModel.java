@@ -1,4 +1,4 @@
-package jar;
+package jar_test;
 
 import robot.GameData;
 import robot.RobotModel;
@@ -114,7 +114,7 @@ public class MyRobotModel implements RobotModel {
         			+ angularCoefficient * ANGULAR_INCREMENT;
         	double angularVelocity = (flashOnTheRight(angleToTarget) ? -1 : 1)
         			* angularVelocityAbsolute;
-        	moveRobot(velocity, angularVelocity, 5);
+        	moveRobot(velocity, angularVelocity, 35);
     	}
     }
 
